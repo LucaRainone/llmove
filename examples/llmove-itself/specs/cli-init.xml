@@ -1,0 +1,57 @@
+<feat><![CDATA[
+Create the file llmove.cjs. JUST ONE SINGLE FILE. Here are the specifications:
+
+1. **Execution Modes**:
+    * Recursively traverse `specs/`, collecting all `.xml` files.
+    * If a file is named `root.xml` or `conventions.xml`, treat it as a system file.
+    * Follow `<include>` tags to resolve and inline additional XML files (recursively).
+        * example: <include path="../relative/path" lines="8:19,100:115"/>
+        * the attribute "lines" is not mandatory and tells you that you have to include only the range of lines (from 8 to 19 and from 100 to 115)
+    * Clean each file's content:
+
+        * Remove `<command>`, `<system>`, `<feat>`, `<include>` tags.
+            * Strip `<![CDATA[`  blocks.
+            * Trim whitespace.
+
+2. **Execution Modes**:
+
+    * If run with `--dryRun`: print cleaned system, context, and user prompt content to stdout, don't make an API call (exit)
+    * If run with `--again`: re-apply the last API response from `.llmove/last-llmove-output.json` to write files again. Then exit.
+    * Otherwise:
+    * Check if the API_KEY is configured. Throw an error otherwise.
+    * Filter out files already processed (tracked in `.llmove/userPrompts.txt`).
+    * Send system + prompt content to an LLM API.
+    * Expect a response with a list of files `{ path, content }`.
+    * Write those files to disk. If a file already exists, append a timestamp to its name.
+    * Cache the result in `.llmove/last-llmove-output.json`.
+    * Track processed prompts in `.llmove/userPrompts.txt`.
+
+3. **API Call**:
+
+    * Use HTTPS to send a POST request to the env variable API_URL (prefixed if it's configured) default api.anthropic.com
+    * Include headers:
+
+    * `x-api-key`: read from env
+    * `Content-Type: application/json`
+    * `anthropic-version: 2023-06-01` if the environment url is of anthropic
+    * Request should include:
+
+    * `model: as configured in env. but default is claude-opus-4-20250514
+    * `system`: full system + context content
+    * `messages`: a single user message with prompt content
+    * A tool named `file_generator` that expects a list of files `{ path, content }` as output
+    * Set `tool_choice` to always use `file_generator`
+
+4. **Helper Logic**:
+
+    * Track file depth to sort system/context/prompt files deterministically.
+    * Ensure directories exist before writing files.
+    * If the file exists, don't overwrite it but create another file with the same name with suffix the current timestamp
+
+5. Your OUTPUT
+
+    * Write the complete script as a single `.cjs` file with a shebang line.
+    * Use CommonJS modules (`require`, not `import`).
+    * Disable any linter possible with proper comment at the beginning of file
+
+]]></feat>

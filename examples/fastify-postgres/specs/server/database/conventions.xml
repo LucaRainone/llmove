@@ -1,0 +1,23 @@
+<database_conventions type="yaml">
+database:
+  engine: Postgres 17
+  generateComments: true
+  uuid: preferred
+  compositeKeys: mandatory and primary on *_link and *_info tables
+  output: pure SQL in server/database/migrations
+  tableNames:
+    singular: true
+    languageTable: lang
+    relationSuffix: _link
+    localizedSuffix: _info
+    user: acl
+  standardColumnNames:
+    id: for primary id if not _info and _link. Use integer in case of few records (like labels, lang), uuid otherwise.
+    created_at: for keep track of creation time if needed
+    updated_at: for keep track of updating time if needed
+    sort_index: for rows priority
+    "{fk_table}_id": for foreign keys columns
+  additional: >
+    Timestamps must be stored with timezone information
+
+</database_conventions>

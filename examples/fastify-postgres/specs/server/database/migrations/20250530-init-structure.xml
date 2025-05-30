@@ -1,0 +1,6 @@
+<command>
+  create an initial database structure:
+  - for user management (login, register, password recovery)
+  - main langs table with first data entries (italian, english, german)
+  - every user can insert a point of interests (coordinates, description). The description should be multilanguaged.
+</command>
