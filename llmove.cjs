@@ -28,7 +28,7 @@ const CACHE_DIR = '.llmove';
 const LAST_OUTPUT_FILE = path.join(CACHE_DIR, 'last-llmove-output.json');
 const USER_PROMPTS_FILE = path.join(CACHE_DIR, 'userPrompts.txt');
 const DEFAULT_API_URL = 'https://api.anthropic.com';
-const DEFAULT_MODEL = 'claude-3-5-sonnet-20241022';
+const DEFAULT_MODEL = 'claude-opus-4-20250514';
 
 // Parse command line arguments
 function parseArgs() {
@@ -106,15 +106,10 @@ function cleanXmlContent(content, filePath) {
   // Process includes recursively
   content = processIncludes(content, path.dirname(filePath));
 
-  // Remove unwanted tags and their content
-  const tagsToRemove = ['file', 'include', 'assistant'];
-  for (const tag of tagsToRemove) {
-    const regex = new RegExp(`<${tag}[^>]*>.*?</${tag}>`, 'gs');
-    content = content.replace(regex, '');
-  }
-
-  // Remove code blocks
-  content = content.replace(/```[\s\S]*?```/g, '');
+  content = content.replace(
+   /^<(feat|system|command)[^>]*>(.*?)<\/\1>/s,
+   (_, tag, inner) => inner.trim()
+  );
 
   // Trim whitespace
   return content.trim();
@@ -124,7 +119,7 @@ function processIncludes(content, basePath) {
 
   const parseLineRanges = (rangeStr) => {
     return rangeStr.split(',').map(part => {
-      const [start, end] = part.split(':').map(n => parseInt(n, 10));
+      const [start, end] = part.split(':').map(n => parseInt(n.trim(), 10));
       return {start, end};
     });
   }
