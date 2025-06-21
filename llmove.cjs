@@ -12,6 +12,7 @@ const { runPlugins } = require('./lib/plugins');
 const { makeApiCall } = require('./lib/api');
 const { writeFiles, applyLastOutput } = require('./lib/output');
 const { ensureDir } = require('./lib/utils');
+const {parseContent, extractRootMetadata} = require("./lib/parser");
 
 const CACHE_DIR = '.llmove';
 const LAST_OUTPUT_FILE = path.join(CACHE_DIR, 'last-llmove-output.json');
@@ -46,20 +47,32 @@ async function main() {
     console.log('Files re-written from last output.');
     return;
   }
-
-  const xmlFiles = collectXmlFiles(config.specsFolder || 'specs');
+  const alreadyParsed = fs.readFileSync(USER_PROMPTS_FILE).toString().split("\n").filter(a => a);
+  let xmlFiles = collectXmlFiles(config.specsFolder || 'specs');
   if (xmlFiles.length === 0) {
     console.error(`Error: No .xml files found in ${config.specsFolder || 'specs'}`);
     process.exit(1);
   }
 
-  const { files, system, prompt } = await runPlugins(xmlFiles);
+  const metadata = extractRootMetadata(xmlFiles.find(a => a.relativePath === "root.xml").path);
+  xmlFiles = xmlFiles.filter(file => !alreadyParsed.includes(file.relativePath)).map(f=>({...f, content: fs.readFileSync(f.path).toString()}));
+
+  const newFiles = xmlFiles.map(file => file.relativePath)
+
+  const {files} = await runPlugins(config, xmlFiles, metadata);
+
+  const {system, prompt} = parseContent(files);
 
   if (isDryRun) {
     console.log('=== SYSTEM ===');
     console.log(system);
     console.log('\n=== PROMPT ===');
     console.log(prompt);
+    return;
+  }
+
+  if (!prompt) {
+    console.log("No new user prompt found.");
     return;
   }
 
@@ -72,13 +85,16 @@ async function main() {
     const response = await makeApiCall(config, system, prompt);
     const files = response.content[0].input.files;
 
+
+    fs.writeFileSync(LAST_OUTPUT_FILE, JSON.stringify({files}, null, 2));
+    fs.appendFileSync(USER_PROMPTS_FILE, "\n"+newFiles.join('\n'));
+
     await writeFiles(files);
 
-    fs.writeFileSync(LAST_OUTPUT_FILE, JSON.stringify({ files }, null, 2));
-    fs.appendFileSync(USER_PROMPTS_FILE, `\n=== ${new Date().toISOString()} ===\n${prompt}\n`);
 
     console.log(`Successfully generated ${files.length} file(s).`);
   } catch (error) {
+    console.error(error);
     console.error('Error:', error.message);
     process.exit(1);
   }
