@@ -23,5 +23,8 @@
         Write clean, modular, and well-structured code in Node.js, HTML, and JavaScript.
         Use small, focused functions and separate concerns logically (e.g., DOM manipulation, API logic, storage).
         Minimize output. Do not invent or assume specifications unless they are functionally necessary or explicitly requested.
+
+        In case of command to execute, like npm install, create a file called npm.sh and write here the commands. Use "echo" in each step
+        in order to show the progress of the script.
     </behaviour>
 </system>
