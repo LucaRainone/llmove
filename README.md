@@ -1,259 +1,270 @@
-# LLMOVE CLI
+# llmove
 
-`llmove` is a command-line tool for parsing and transforming XML-based specifications using a language model (Claude Opus by Anthropic). 
-It recursively scans a directory of `.xml` spec files, extracts user prompt content, and calls a language model API to generate corresponding output files.
+`llmove` is a command-line tool that processes XML specification files and sends them to Claude (Anthropic's LLM) for AI-powered code generation.
 
-## WHY
+## What it does
 
-I love LLMs for coding (the tool is called **L(LM)OVE**), and I find them extremely useful for everyday tasks.
-However, I always run into issues when I fully delegate work to an external, opaque tool like Copilot or similar solutions:
+`llmove` scans a directory of `.xml` specification files, extracts prompts and system instructions, and sends them to Claude to generate code or documentation. The tool:
 
-* I don’t have control over the context being shared to generate the code correctly.
-* I don’t know whether I’m exposing sensitive data, since the tool decides what to send to the LLM service.
-* The generated output doesn’t follow my project’s conventions (even if those are outdated or non-standard, they still matter).
+- Recursively processes XML files with support for includes and plugins
+- Tracks which files have been processed to avoid duplicates
+- Supports dry-run mode to preview what will be sent to the API
+- Can re-apply the last generated output
+- Automatically handles file naming conflicts with timestamps
 
-Because of this, I prefer interacting with an LLM directly—copying context in, pasting results out. But that’s inefficient.
+## Installation
 
-So, I started using a simple CLI tool to automate this interaction. I’ve been improving it by using the tool itself.
+```bash
+npm install -g llmove
+```
 
-You can see an example in [examples/llmove-itself](examples/llmove-itself).
+## Quick Start
 
-## HOW
+### 1. Configure llmove
 
-Just:
+```bash
+llmove configure
+```
 
-- download the [llmove.cjs](llmove.cjs) file
-- create your xml files in `specs` directory and run it. 
-- Configure your anthropic API_KEY in the env var.
-- write your specs following the [examples](examples) as guide
-- run `node llmove.cjs --dryRun` to see the content that the cli will send to the LLM
+This will prompt you for:
+- Your Anthropic API key
+- The model to use (default: `claude-opus-4-20250514`)
+- The specs folder path (default: `specs`)
 
-In order to work with env vars easily you can (one of):
+Configuration is stored in `~/.llmove/config.json`.
 
-- `export LLMOVE_API_KEY=your_api_key_here`
-- create a .env file (see [.env.example](.env.example)) and call the CLI with `node --env-file=.env llmove.cjs`
-- run `LLMOVE_API_KEY=.... node llmove.cjs`
-- if you already use dotenv package in your project, just add the LLMOVE_* vars in your .env file in the root file
+### 1.1 Initialize llmove in your project
 
-It is better to write one spec file at time (but you want your root.xml and conventions.xml).
-The executed files are tracked in the .llmove directory so they are not tracked anymore (you can commit for keep track of
-requirements, or you can delete them).
+```bash
+llmove init
+```
 
-## Example
+### 2. Write your first spec file
 
-You want to start a project, or work with an existent one.
-You first need to create the first prompt with universal conventions. You can copy and paste this and working on it:
+Create a file `specs/my-feature.xml`:
 
-specs/root.xml
 ```xml
+<prompt>
+  Generate a Node.js function that validates email addresses using regex.
+  The function should:
+  - Return true for valid emails
+  - Return false for invalid emails
+  - Handle edge cases like multiple dots, special characters
+</prompt>
+```
+
+### 3. Run llmove
+
+```bash
+# Preview what will be sent (dry run)
+llmove --dryRun
+
+# Generate code from your specs
+llmove
+
+```
+
+## Writing XML Spec Files
+
+### Basic Structure
+
+Spec files use two main tags:
+
+- `<system>` - Sets the system prompt/context for the LLM
+- `<prompt>` - Contains the user prompt/request
+
+### Example Spec File
+
+```xml
+<!-- specs/api/user-service.xml -->
 <system>
-    You are a code assistant. You will receive a list of XML stuffs. Some are instructions to keep
-    in mind, others are commands to execute. You may receive multiple commands, each to be executed separately, maintaining the same
-    relative path.
-    <context>
-        You're working on a new TODO APP platform powered with AI
-    </context>
-    <dependencies>
-        <backend>Fastify, Typebox, fastify-jwt, postgrator for migrations </backend>
-        <database>PostgreSQL 17, no ORM just pure query</database>
-        <development>Docker compose for postgres</development>
-    </dependencies>
-    <paths>
-        <path relative="server">All backend stuff</path>
-        <path relative="server/database/migrations">All migrations in pure SQL. {YYYYMMDDHHMM}-summary.sql</path>
-        <path relative="server/src/lib">All the utilities functions. One file for each function</path>
-        <path relative="server/src/plugins">All fastify plugins</path>
-        <path relative="server/src/routes">All routes. Use autoload</path>
-    </paths>
-    <behaviour>
-        Write a clear, clean nodejs. Write small functions and separate the logic.
-    </behaviour>
+  You are an expert Node.js developer. Generate clean, well-documented code
+  following REST API best practices.
 </system>
 
+<prompt>
+  Create a user service with the following endpoints:
+  - GET /users - List all users with pagination
+  - GET /users/:id - Get user by ID
+  - POST /users - Create new user
+  - PUT /users/:id - Update user
+  - DELETE /users/:id - Delete user
+  
+  Use Express.js and include input validation.
+</prompt>
 ```
 
-This is the first system prompt—very simple and straightforward. You can improve it later adding conventions and specifications.
-Please note that there is no schema validation. All tags are used solely to write concise and functional instructions for the LLM. You can use as many tags as you like; this method is more efficient for instructing the LLM.
-The CLI simply removes the first <system> tag.
+### Advanced Features
 
-Sometimes, you need to make additional conventions explicit—for example, for the database.
+#### Including Files
 
-specs/server/database/conventions.xml
-```xml
-<database_conventions type="yaml">
-database:
-  engine: Postgres 17
-  generateComments: true
-  uuid: preferred
-  compositeKeys: mandatory and primary on *_link and *_info tables
-  output: pure SQL in server/database/migrations
-  tableNames:
-    singular: true
-    languageTable: lang
-    relationSuffix: _link
-    localizedSuffix: _info
-    user: acl
-  standardColumnNames:
-    id: for primary id if not _info and _link. Use integer in case of few records (like labels, lang), uuid otherwise.
-    created_at: for keep track of creation time if needed
-    updated_at: for keep track of updating time if needed
-    sort_index: for rows priority
-    "{fk_table}_id": for foreign keys columns
-  additional: >
-    Timestamps must be stored with timezone information
-
-</database_conventions>
-```
-
-Again, there is no schema validation and here I used yaml because it's more concise and we can save some token.
-You can use this as draft. 
-
-root and conventions files are always included.
-
-Now we are ready to work.
-
-specs/server/database/migrations/20250530-init-structure.xml
-```xml
-<command>
-  create an initial database structure:
-  — for user management (login, register, password recovery)
-  - main langs table with first data entries (italian, english, german)
-  - every user can insert a point of interests (coordinates, description). The description should be in multiple languages.
-</command>
-```
-
-The command tag is stripped out by the cli.
-As you can see the requirements are generic, but thanks to the well-written conventions files the output will be good.
-
-The anthropic service will generate the file .sql in `server/database/migrations/202505311200-init-structure.sql`
-
-Now we can create the first fastify routes
+You can include content from other files:
 
 ```xml
-<feat>
-    Here is the database dll as context for you:
-    <dll>
-        <include path="../../../server/database/migrations/202505311200-initial-schema.sql" lines="18:29"/>
-    </dll>
-    Create the routes for user management (login, register, recovery)
-</feat>
-
+<prompt>
+  Update this function to handle async operations:
+  
+  <llmove:include path="./src/validator.js" lines="10:25" />
+</prompt>
 ```
 
-The `<include>` part is very useful for context controlling. I'm giving to the LLM only the create table part regarding the users.
-Very efficient.
-In this case only the `<feat>` tag is stripped out.
+#### Source Code References
 
+Use the source tag to include entire files:
 
-## Features
+```xml
+<prompt>
+  Refactor this code to use TypeScript:
+  
+  <llmove:source path="./legacy/user.js" />
+</prompt>
+```
 
-* Recursively parses `.xml` files from a `specs/` directory.
-* Detects system files (`root.xml`, `conventions.xml`) and separates user prompts.
-* Tracks already-processed files to avoid duplication.
-* Calls a Claude Opus API endpoint to generate files based on user prompts and system context.
-* Stores output files locally and prevents overwrites by renaming duplicates.
-* Supports dry-run and repeat-last-operation modes.
+#### Root Configuration
+
+The `specs/root.xml` file can define global settings:
+
+```xml
+<system version="1.0">
+  <!-- Global system context applied to all prompts -->
+  You are a senior developer working on a Node.js microservices project.
+  Follow clean code principles and include comprehensive error handling.
+</system>
+```
+
+## Configuration
+
+### Environment Variables
+
+You can override configuration using environment variables:
+
+- `LLMOVE_API_KEY` - Your Anthropic API key
+- `LLMOVE_API_URL` - Custom API URL (default: https://api.anthropic.com)
+- `LLMOVE_API_MODEL` - Model to use
+
+### File Structure
+
+```
+project/
+├── specs/              # Your XML specification files
+│   ├── root.xml       # Global configuration
+│   └── features/      # Organize specs in subdirectories
+├── .llmove/           # Cache and metadata
+│   ├── userPrompts.txt        # Tracks processed files
+│   └── last-llmove-output.json # Last generation result
+```
+
+## Tips
+
+1. **Organize your specs**: Use subdirectories to group related specifications
+2. **Use conventions.xml**: Place common patterns in `conventions.xml` files
+3. **Incremental processing**: llmove tracks which files have been processed
+4. **Version control**: Commit your specs to track changes over time
+5. **Dry run first**: Always use `--dryRun` to preview before making API calls
 
 ---
 
-## Usage
+## How to Contribute
+
+### Architecture
+
+`llmove` is designed to be minimal and extensible:
+
+- **Main CLI** (`llmove.cjs`): Entry point and command handling
+- **Libraries** (`lib/`): Core functionality split into focused modules
+- **Plugins** (`lib/plugins/`): Transform and filter XML content
+
+### Plugin System
+
+llmove supports two types of plugins:
+
+#### Filter Plugins
+
+Filter plugins process the list of files before parsing:
+
+```javascript
+// lib/plugins/myFilter.js
+module.exports = async function filterExample(config, files, metadata) {
+  // Transform or filter the files array
+  return files.filter(file => !file.path.includes('draft'));
+};
+```
+
+#### Parse Plugins
+
+Parse plugins transform individual file content:
+
+```javascript
+// lib/plugins/myParser.js
+module.exports = async function parseExample(config, file, metadata) {
+  // Transform file content
+  file.content = file.content.replace(/TODO/g, 'TASK');
+  
+  // Can return just the file or include new files to process
+  return {
+    file: file,
+    newFiles: [] // Optional: additional files to process
+  };
+};
+```
+
+### Adding Plugins
+
+1. Create your plugin in `lib/plugins/`
+2. Add it to the appropriate array in `lib/plugins.js`:
+
+```javascript
+const filterPlugins = [
+  require('./plugins/filterAddRootConventions'),
+  require('./plugins/myFilter') // Add your filter plugin
+];
+
+const parsePlugins = [
+  require('./plugins/source'),
+  require('./plugins/includeFiles'),
+  require('./plugins/myParser') // Add your parse plugin
+];
+```
+
+### Core Modules
+
+- **api.js**: Handles communication with Anthropic's API
+- **config.js**: Manages configuration from file and environment
+- **files.js**: File system operations and XML file discovery
+- **parser.js**: XML parsing and content extraction
+- **output.js**: File writing with conflict resolution
+- **plugins.js**: Plugin system orchestration
+- **init.js**: Interactive configuration setup
+
+### Development Guidelines
+
+1. **Keep it tiny**: No unnecessary dependencies
+2. **Small functions**: Each function should do one thing well
+3. **Clear separation**: Logic should be separated into appropriate modules
+4. **Error handling**: Fail gracefully with helpful error messages
+5. **Cross-platform**: Use Node.js built-ins for file system operations
+6. **Autocode**: Use llmove itself to create plugins =)
+
+### Testing
+
+Create test XML files in `specs/test/` and run:
 
 ```bash
-node node llmove.cjs [--dryRun] [--again]
+llmove --dryRun
 ```
 
-### Flags
+### Submitting Changes
 
-* `--dryRun`:
-  Displays the system, context, and user prompt content that would be sent to the API. No API calls are made, and no files are written.
-
-* `--again`:
-  Re-runs the last API response and re-generates the output files from the cached result in `.llmove/last-llmove-output.json`.
-
----
-
-## Directory Structure
-
-* `specs/`: Input directory containing `.xml` specification files.
-* `.llmove/`: Internal cache directory.
-
-    * `userPrompts.txt`: Tracks previously processed files.
-    * `last-llmove-output.json`: Stores last API output for reuse.
-
----
-
-## How It Works
-
-1. **Scan Phase**:
-
-    * Recursively scans all `.xml` files in `specs/`.
-    * Identifies system-level files (`root.xml`, `conventions.xml`) and their `include` dependencies.
-    * Extracts content, removes tags like `<command>`, `<feat>`, and CDATA wrappers.
-
-2. **Processing Phase**:
-
-    * Builds `system`, `context`, and `user` prompt messages from cleaned file contents.
-    * Skips user prompts that were already processed unless `--again` is used.
-
-3. **Execution Phase**:
-
-    * In dry-run mode: Prints cleaned system and prompt contents.
-    * In normal mode:
-
-        * Sends a structured request to the Anthropic Claude API.
-        * Receives a list of files to be written (with paths and content).
-        * Writes those files to disk, renaming if they already exist.
-        * Saves the output in `.llmove/last-llmove-output.json`.
-
----
-
-## API Interaction
-
-Uses HTTPS to POST a request to Anthropic's Claude API. The request includes:
-
-* `system`: Concatenated content from system files.
-* `messages`: User prompts to be interpreted.
-* `tools`: Describes expected output format (a list of files with `path` and `content`).
-* `tool_choice`: Forces Claude to use the `file_generator` tool.
-
-**Expected API response**: A list of file objects with path and content, which the CLI writes locally.
-
----
-
-## Requirements
-
-* Node.js v20+
-* An `API_KEY` provided via the environment variable `LLMOVE_API_KEY`
-
-```bash
-export apiKey=your_api_key_here
-```
-
----
-
-## Example Workflow
-
-```bash
-# First run: Parse and call API
-node node llmove.cjs
-
-# Repeat previous transformation without re-calling API
-node node llmove.cjs --again
-
-# Debug what would be sent to the API
-node node llmove.cjs --dryRun
-```
-
----
-
-## Notes
-
-* All processed file paths are logged to `.llmove/userPrompts.txt` to prevent duplicate processing.
-* If a file with the same name already exists in output, a timestamp is appended to avoid overwriting.
-* Includes are recursively resolved, and files included by user prompts are promoted to system files.
-
----
+1. Fork the repository
+2. Create a feature branch
+3. Write clear commit messages
+4. Ensure your code follows the existing style
+5. Submit a pull request with a description of your changes
 
 ## License
 
-CC0 1.0 Universal
+CC0-1.0 
+
+## Author
+
+Luca Rainone

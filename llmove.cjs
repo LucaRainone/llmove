@@ -5,7 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { init } = require('./lib/init');
+const { init, initProject} = require('./lib/init');
 const { loadConfig } = require('./lib/config');
 const { collectXmlFiles } = require('./lib/files');
 const { runPlugins } = require('./lib/plugins');
@@ -22,18 +22,31 @@ async function main() {
   const args = process.argv.slice(2);
   const command = args[0];
 
-  if (command === 'init') {
+  const config = await loadConfig();
+  if (command === 'configure') {
     await init();
     return;
   }
 
-  const config = await loadConfig();
+  if (command === 'init') {
+    await initProject(config);
+    return;
+  }
+
+  if (command === 'version') {
+    console.log(require(__dirname+'/package.json').version);
+    return;
+  }
+
   if (!config) {
     console.error('Error: No configuration found. Run "llmove init" first.');
     process.exit(1);
   }
 
   ensureDir(CACHE_DIR);
+  if(!fs.existsSync(USER_PROMPTS_FILE)) {
+    fs.writeFileSync(USER_PROMPTS_FILE, "");
+  }
 
   const isDryRun = args.includes('--dryRun');
   const isAgain = args.includes('--again');
@@ -75,6 +88,8 @@ async function main() {
     console.log("No new user prompt found.");
     return;
   }
+
+  console.log(`Context and Prompt are ${system.length + prompt.length} chars`)
 
   if (!config.apiKey) {
     console.error('Error: API_KEY not configured.');

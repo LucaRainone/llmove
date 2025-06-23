@@ -1,7 +1,7 @@
 {
   "name": "llmove",
   "version": "0.2.0",
-  "description": "`llmove` is a command-line tool for parsing and transforming XML-based specifications using a language model (Claude Opus by Anthropic).  It recursively scans a directory of `.xml` spec files, extracts user prompt content, and calls a language model API to generate corresponding output files.",
+  "description": "`llmove` is a command-line tool that processes XML specification files and sends them to Claude (Anthropic's LLM) for AI-powered code generation.",
   "main": "llmove.cjs",
   "bin": {
     "llmove": "./llmove.cjs"
