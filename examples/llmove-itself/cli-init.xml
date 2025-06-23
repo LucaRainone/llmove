@@ -16,6 +16,7 @@
         * Now I want a plugins system that parse these files. Plugins can remove files from the list and other plugins can manipulate the content.
         Plugins are stored in functions (one function for each plugin and one file per function). Divide plugins in two groups: one for filtering the list of files (called first), one for parsing the content (called later).
         * Write only one identity plugin per group for now.
+        * Considers everything in root.xml and conventions.xml file as system prompt, as User prompt everything else. Don't parse user prompt searching stuffs. This is the role of plugins.
 
     2. **Execution Modes 2 **:
 

@@ -39,7 +39,7 @@ async function main() {
   }
 
   if (!config) {
-    console.error('Error: No configuration found. Run "llmove init" first.');
+    console.error('Error: No configuration found. Run "llmove configure" first.');
     process.exit(1);
   }
 
