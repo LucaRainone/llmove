@@ -6,6 +6,9 @@
   "bin": {
     "llmove": "./llmove.cjs"
   },
+  "scripts": {
+    "test": "node test/run-tests.js"
+  },
   "directories": {
     "example": "examples",
     "lib": "lib"

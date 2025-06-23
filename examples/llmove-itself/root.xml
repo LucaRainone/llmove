@@ -6,16 +6,17 @@
         This is the system prompt for the tool itself.
     </context>
     <scope>
-       Creation of a helpful cli
+        Creation of a helpful cli
     </scope>
     <dependencies>
-        Vanilla nodejs with only essential libraries. It MUST be tiny
+        Vanilla Node.js with only essential libraries. It MUST be tiny
     </dependencies>
     <paths>
         <path relative="llmove.cjs">path of the CLI</path>
         <path relative="lib/">path of dir for all utility functions. One file foreach group of function</path>
         <path relative="lib/plugins">path for plugins.</path>
         <path relative="specs">Directories for input files. Here the user will put new files</path>
+        <path relative="test/plugins/{plugin.test.js}">test files</path>
         <path relative=".llmove">Path for cache and metadata files </path>
     </paths>
     <envs prefixed="LLMOVE_">
@@ -27,7 +28,7 @@
         Write a clear, clean nodejs. Write small functions and separate the logic.
     </behaviour>
     <plugins>
-        These are an example of two tipes of plugin:
+        These are examples of two types of plugin:
         <code>
             <llmove:include path="/lib/plugins/filterIdentity.js" />
         </code>
