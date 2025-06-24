@@ -1,0 +1,5 @@
+<prompt>
+    Write the test ONLY for this plugin.
+    Modify the source if needed.
+<llmove:source path="/lib/plugins/filterAddRootConventions.js" />
+</prompt>

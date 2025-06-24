@@ -1,0 +1,21 @@
+<prompt>
+    Generate a complete readme.md file considering all the sources of this command line.
+    As first thing describe the easy utilization: what it does, how to install, how to init and configure and write specs xml files
+    Details will be under "how to contribute".
+<SOURCES>
+    <llmove:source path="/package.json" />
+    <llmove:source path="/llmove.cjs" />
+    <llmove:source path="/lib/utils.js" />
+    <llmove:source path="/lib/plugins.js" />
+    <llmove:source path="/lib/parser.js" />
+    <llmove:source path="/lib/output.js" />
+    <llmove:source path="/lib/init.js" />
+    <llmove:source path="/lib/files.js" />
+    <llmove:source path="/lib/config.js" />
+    <llmove:source path="/lib/api.js" />
+    <llmove:source path="/lib/plugins/filterAddRootConventions.js" />
+    <llmove:source path="/lib/plugins/includeFiles.js" />
+    <llmove:source path="/lib/plugins/parseIdentity.js" />
+    <llmove:source path="/lib/plugins/source.js" />
+</SOURCES>
+</prompt>

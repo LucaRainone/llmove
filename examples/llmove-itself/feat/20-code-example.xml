@@ -1,0 +1,3 @@
+<prompt>
+    Create a plugin that replace all the `<llmove:source path="{path}" />` at the begin of line (ignoring spaces) in `<code path="{path}"><llmove:include path="{path}" /></code>`
+</prompt>

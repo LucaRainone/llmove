@@ -1,0 +1,6 @@
+<prompt>
+    <llmove:include path="/specs/root.xml" parse="true"/>
+
+    Create a plugin that add to the list of files always the files root.xml and conventions.xml ONLY if they are available in current and all parents directory of one of files already in list
+    As consequence, the main root.xml and conventsions.xml in the root of specs folder, are always included.
+</prompt>
