@@ -1,0 +1,10 @@
+<prompt>
+    Create a function that manage a chat via CLI. `llmove chat` should return a welcome message and it should wait for user input.
+    The context of the chat must be all the conventions.xml and root.xml in specs.
+    A special system prompt file specs/chat.xml may be present and used as context.
+    Once the user send input, the conversation starts: after the AI response, the cli should wait for other user input and keep the history.
+    Write it in lib/chat.js.
+    use the openai sdk in order to manage stream data.
+    this is the current api.js for sending data to claude, I think it's better to refactor it supporting also stream and using sdk
+    <llmove:source path="/lib/api.js" />
+</prompt>

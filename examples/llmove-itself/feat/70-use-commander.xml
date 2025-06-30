@@ -1,0 +1,5 @@
+<prompt>
+    Refactor this file using the `commander` library.
+
+    <llmove:source path="/llmove.cjs" />
+</prompt>
