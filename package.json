@@ -14,5 +14,10 @@
     "lib": "lib"
   },
   "author": "Luca Rainone",
-  "license": "CC0-1.0"
+  "license": "CC0-1.0",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.55.0",
+    "commander": "^14.0.0",
+    "openai": "^5.8.2"
+  }
 }
