@@ -125,12 +125,22 @@ Use the source tag to include entire files:
 The `specs/root.xml` file can define global settings:
 
 ```xml
-<system version="1.0">
+<system version="0.2.0">
   <!-- Global system context applied to all prompts -->
   You are a senior developer working on a Node.js microservices project.
   Follow clean code principles and include comprehensive error handling.
 </system>
 ```
+
+#### Chat
+
+With
+
+```shell
+llmove chat
+```
+
+you can chat with your LLM having the XML root and conventions file as context.
 
 ## Configuration
 
