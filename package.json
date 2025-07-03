@@ -9,10 +9,7 @@
   "scripts": {
     "test": "node test/run-tests.js"
   },
-  "directories": {
-    "example": "examples",
-    "lib": "lib"
-  },
+  "files": [],
   "author": "Luca Rainone",
   "license": "CC0-1.0",
   "dependencies": {
