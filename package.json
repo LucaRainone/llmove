@@ -1,6 +1,6 @@
 {
   "name": "llmove",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "llmove is a command-line tool that processes XML specification files and sends them to Claude (Anthropic's LLM) for AI-powered code generation.",
   "main": "llmove.cjs",
   "bin": {
@@ -9,7 +9,7 @@
   "scripts": {
     "test": "node test/run-tests.js"
   },
-  "files": [],
+  "files": ["lib","assets"],
   "author": "Luca Rainone",
   "license": "CC0-1.0",
   "dependencies": {
