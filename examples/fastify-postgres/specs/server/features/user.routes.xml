@@ -1,7 +1,7 @@
-<feat>
+<prompt>
     Here is the database dll:
     <dll>
     <include path="../../../server/database/migrations/202505311200-initial-schema.sql" lines="18:29"/>
     </dll>
     Create the routes for user management (login, register, recovery)
-</feat>
+</prompt>
