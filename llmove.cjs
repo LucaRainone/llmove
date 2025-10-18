@@ -14,6 +14,7 @@ const { writeFiles, applyLastOutput } = require('./lib/output');
 const { ensureDir } = require('./lib/utils');
 const { parseContent, extractRootMetadata } = require('./lib/parser');
 const { parseMarkdownResponse, validateParsedFiles } = require('./lib/markdown-parser');
+const { processToolRequests } = require('./lib/tool-integration');
 
 const CACHE_DIR = '.llmove';
 const LAST_OUTPUT_FILE = path.join(CACHE_DIR, 'last-llmove-output.json');
@@ -162,9 +163,12 @@ async function processFiles(config, options = {}) {
     process.exit(1);
   }
 
+  // Process tools before making the final API call
+  const { enhancedPrompt, toolOutputs } = await processToolRequests(config, system, prompt);
+
   const _apiCall = async (retryCount = 0) => {
     try {
-      return await makeApiCall(config, system, prompt);
+      return await makeApiCall(config, system, enhancedPrompt);
     }catch(error) {
       if(error.status === 529) {
         console.info(`Anthropic is in overloaded_error. Retrying... in ${retryCount} seconds`);
@@ -181,7 +185,7 @@ async function processFiles(config, options = {}) {
     fs.writeFileSync(LAST_OUTPUT_RESPONSE, rawResponse);
 
     // Parse the markdown response to extract files
-    const {files,notes} = parseMarkdownResponse(rawResponse);
+    const {files, notes} = parseMarkdownResponse(rawResponse);
 
     if (!validateParsedFiles(files)) {
       console.error('Error: Failed to parse valid files from LLM response');
@@ -189,11 +193,25 @@ async function processFiles(config, options = {}) {
       process.exit(1);
     }
 
-    fs.writeFileSync(LAST_OUTPUT_FILE, JSON.stringify({ files }, null, 2));
+    // Save tool outputs along with the files for debugging
+    const outputData = {
+      files,
+      toolOutputs: toolOutputs.length > 0 ? toolOutputs : undefined
+    };
+
+    fs.writeFileSync(LAST_OUTPUT_FILE, JSON.stringify(outputData, null, 2));
     fs.appendFileSync(USER_PROMPTS_FILE, '\n' + newFiles.filter(a=>a !== fakePromptFile).join('\n'));
 
     await writeFiles(files);
     console.log(`Successfully generated ${files.length} file(s).`);
+    if(notes) {
+      console.log("=== NOTES ====")
+      console.log(notes);
+    }
+
+    if (toolOutputs.length > 0) {
+      console.log(`🔧 Used ${toolOutputs.length} tool(s) in generation process.`);
+    }
   } catch (error) {
     console.error('Error:', error.message);
     if (fs.existsSync(LAST_OUTPUT_RESPONSE)) {
@@ -205,11 +223,11 @@ async function processFiles(config, options = {}) {
 
 // Function to reapply last output
 async function reapplyLastOutput() {
-  if (!fs.existsSync(LAST_OUTPUT_FILE)) {
+  if (!fs.existsSync(LAST_OUTPUT_RESPONSE)) {
     console.error('Error: No previous output found.');
     process.exit(1);
   }
-  await applyLastOutput(LAST_OUTPUT_FILE);
+  await applyLastOutput(LAST_OUTPUT_RESPONSE);
   console.log('Files re-written from last output.');
 }
 
