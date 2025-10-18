@@ -1,0 +1,8 @@
+<prompt>
+    on command init the CLI should ask the developer which language wants to initialize.
+    The list will be fetched by the assets/prompts directory, listing files and fetching the lang as prefix.
+    Once the developer choose the language, the proper file will be fetched and uses as prompt.
+    Here's the file to modify:
+
+    <llmove:source path="/lib/init.js" />
+</prompt>

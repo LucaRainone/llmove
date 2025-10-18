@@ -236,16 +236,6 @@ const parsePlugins = [
 ];
 ```
 
-### Core Modules
-
-- **api.js**: Handles communication with Anthropic's API
-- **config.js**: Manages configuration from file and environment
-- **files.js**: File system operations and XML file discovery
-- **parser.js**: XML parsing and content extraction
-- **output.js**: File writing with conflict resolution
-- **plugins.js**: Plugin system orchestration
-- **init.js**: Interactive configuration setup
-
 ### Development Guidelines
 
 1. **Keep it tiny**: No unnecessary dependencies
