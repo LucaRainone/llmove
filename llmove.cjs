@@ -181,7 +181,7 @@ async function processFiles(config, options = {}) {
     fs.writeFileSync(LAST_OUTPUT_RESPONSE, rawResponse);
 
     // Parse the markdown response to extract files
-    const files = parseMarkdownResponse(rawResponse);
+    const {files,notes} = parseMarkdownResponse(rawResponse);
 
     if (!validateParsedFiles(files)) {
       console.error('Error: Failed to parse valid files from LLM response');
