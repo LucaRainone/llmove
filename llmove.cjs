@@ -13,6 +13,7 @@ const { makeApiCall } = require('./lib/api');
 const { writeFiles, applyLastOutput } = require('./lib/output');
 const { ensureDir } = require('./lib/utils');
 const { parseContent, extractRootMetadata } = require('./lib/parser');
+const { parseMarkdownResponse, validateParsedFiles } = require('./lib/markdown-parser');
 
 const CACHE_DIR = '.llmove';
 const LAST_OUTPUT_FILE = path.join(CACHE_DIR, 'last-llmove-output.json');
@@ -145,7 +146,7 @@ async function processFiles(config, options = {}) {
     console.log(system);
     console.log('\n=== PROMPT ===');
     console.log(prompt);
-    console.log(((system+prompt).length/4 >> 0 )+ " tokens (approximately)")
+    console.log(((system+prompt).length/4 >> 0 )+ " tokens (approximately)");
     return;
   }
 
@@ -160,32 +161,33 @@ async function processFiles(config, options = {}) {
     console.error('Error: API_KEY not configured.');
     process.exit(1);
   }
+
   const _apiCall = async (retryCount = 0) => {
     try {
       return await makeApiCall(config, system, prompt);
     }catch(error) {
       if(error.status === 529) {
-        console.info(`Anthropic is in overloaded_error. Retrying... in ${retryCount} seconds`)
-        await sleep(1000*retryCount)
+        console.info(`Anthropic is in overloaded_error. Retrying... in ${retryCount} seconds`);
+        await sleep(1000*retryCount);
         return _apiCall(retryCount+1);
       }
       console.error(error);
       throw error;
     }
   }
-  try {
-    const response = await _apiCall();
-    fs.writeFileSync(LAST_OUTPUT_RESPONSE, JSON.stringify(response, null, 2));
 
-    if (!response.content[0].input.files) {
-      console.error(response.content);
+  try {
+    const rawResponse = await _apiCall();
+    fs.writeFileSync(LAST_OUTPUT_RESPONSE, rawResponse);
+
+    // Parse the markdown response to extract files
+    const files = parseMarkdownResponse(rawResponse);
+
+    if (!validateParsedFiles(files)) {
+      console.error('Error: Failed to parse valid files from LLM response');
+      console.log('Raw response saved to:', LAST_OUTPUT_RESPONSE);
       process.exit(1);
     }
-
-    const files = response.content[0].input.files.map(f => ({
-      ...f,
-      path: f.path.startsWith('/') ? f.path.substring(1) : f.path
-    }));
 
     fs.writeFileSync(LAST_OUTPUT_FILE, JSON.stringify({ files }, null, 2));
     fs.appendFileSync(USER_PROMPTS_FILE, '\n' + newFiles.filter(a=>a !== fakePromptFile).join('\n'));
@@ -193,8 +195,10 @@ async function processFiles(config, options = {}) {
     await writeFiles(files);
     console.log(`Successfully generated ${files.length} file(s).`);
   } catch (error) {
-    console.error(error);
     console.error('Error:', error.message);
+    if (fs.existsSync(LAST_OUTPUT_RESPONSE)) {
+      console.log('Last API response saved to:', LAST_OUTPUT_RESPONSE);
+    }
     process.exit(1);
   }
 }
