@@ -61,12 +61,16 @@ program
  .command('prompt <message...>')
  .description('Send an inline prompt')
  .option('--dryRun', 'Show what would be sent without making API call')
+ .option('--tool', 'Ask the LLM which tool to use for this prompt')
+ .option('--overwrite', 'All files are safe to overwrite')
  .action(async (message, options) => {
    const config = await loadConfig();
    const inlinePrompt = message.join(' ');
    await processFiles(config, {
      inlinePrompt,
-     isDryRun: options.dryRun || false
+     isDryRun: options.dryRun || false,
+     useTool: options.tool || false,
+     overwrite: options.overwrite || false
    });
  });
 
@@ -76,6 +80,8 @@ program
  .description('Process XML files in specs folder')
  .option('--dryRun', 'Show what would be sent without making API call')
  .option('--again', 'Re-apply last output files')
+ .option('--tool', 'Ask the LLM which tool to use for processing')
+ .option('--overwrite', 'All files are safe to overwrite')
  .action(async (options) => {
    const config = await loadConfig();
 
@@ -85,7 +91,9 @@ program
    }
 
    await processFiles(config, {
-     isDryRun: options.dryRun || false
+     isDryRun: options.dryRun || false,
+     useTool: options.tool || false,
+     overwrite: options.overwrite || false
    });
  });
 
@@ -93,7 +101,7 @@ program
 async function processFiles(config, options = {}) {
   const fakePromptFile = '__inlineprompt__.xml';
 
-  const { inlinePrompt = '', isDryRun = false } = options;
+  const { inlinePrompt = '', isDryRun = false, useTool = false, overwrite = false } = options;
 
   if (!config) {
     console.error('Error: No configuration found. Run "llmove configure" first.');
@@ -163,8 +171,16 @@ async function processFiles(config, options = {}) {
     process.exit(1);
   }
 
-  // Process tools before making the final API call
-  const { enhancedPrompt, toolOutputs } = await processToolRequests(config, system, prompt);
+  let enhancedPrompt = prompt;
+  let toolOutputs = [];
+
+  // Only process tools if --tool flag is specified
+  if (useTool) {
+    console.log('🔧 Tool mode enabled - asking LLM for tool selection...');
+    const toolResult = await processToolRequests(config, system, prompt);
+    enhancedPrompt = toolResult.enhancedPrompt;
+    toolOutputs = toolResult.toolOutputs;
+  }
 
   const _apiCall = async (retryCount = 0) => {
     try {
@@ -202,7 +218,7 @@ async function processFiles(config, options = {}) {
     fs.writeFileSync(LAST_OUTPUT_FILE, JSON.stringify(outputData, null, 2));
     fs.appendFileSync(USER_PROMPTS_FILE, '\n' + newFiles.filter(a=>a !== fakePromptFile).join('\n'));
 
-    await writeFiles(files);
+    await writeFiles(files, overwrite);
     console.log(`Successfully generated ${files.length} file(s).`);
     if(notes) {
       console.log("=== NOTES ====")
