@@ -1,0 +1,7 @@
+<prompt>
+    In writeFiles functions in lib/output.js I want to be absolutely certain that the files are inside the current project.
+    I want to avoid that there are path like ../../../../etc/passwd (for example) or anything else outside our scope.
+    Please take all the necessary measure.
+
+    <llmove:source path="/lib/output.js" />
+</prompt>

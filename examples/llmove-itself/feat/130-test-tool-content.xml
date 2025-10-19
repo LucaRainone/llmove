@@ -1,0 +1,10 @@
+<prompt>
+    Please refactor the file test/plugins/list-files.test.js because now the output of the function is a string like:
+
+    <files>
+        <file>...</file>
+        <file>...</file>
+    </files>
+
+    and not more an array
+</prompt>

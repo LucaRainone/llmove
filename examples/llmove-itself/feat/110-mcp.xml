@@ -1,0 +1,14 @@
+<prompt>
+    Implement a plugin for mcp server.
+    Here's what I would like to do:
+    - create a folder lib/tools
+    - create one simple mcp tool that do this (specification in pseudocode): (dirs) => dirs.forEach(dir=>dir.allFiles())
+    - when llmove receives the input prompt, it calls the LLM giving it the list of available tools (for now only one)
+    asking if it needs to use one or more tool and what which input.
+    - then llmove collect every output and make the final api call with the initial prompt and the output of tools.
+
+    Here there are files of your interest
+
+    <llmove:source path="/llmove.cjs" />
+    <llmove:source path="/lib/api.js" />
+</prompt>

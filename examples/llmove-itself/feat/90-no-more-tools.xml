@@ -1,0 +1,13 @@
+<prompt>
+    Don't use tools anymore. They are expensive and not good for big files.
+    So ask the LLM to write in plain text but following rules in order to allow us to parse the response and
+    extract the files.
+
+    So in api.js file you should call the llm normally, without json tools, and ask it to answer in markdown. Remember
+    that you have to parse the answer and extract the list of files. So suggest a right template
+    Then in llmove.cjs, you need to parse the answer and extract content and write files:
+
+    <llmove:source path="/lib/api.js" />
+
+    <llmove:source path="/llmove.cjs" />
+</prompt>

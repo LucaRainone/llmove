@@ -1,0 +1,6 @@
+<prompt>
+    In llmove.cjs make the tool flow optional with one flag --tool : only with this flag the CLI should ask the llm the tool to use.
+
+    Here's the source:
+    <llmove:source path="/llmove.cjs" />
+</prompt>

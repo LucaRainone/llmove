@@ -1,0 +1,4 @@
+<prompt>
+    Rewrite this tests using the node:test and node:assert library. We don't need console log.
+    <llmove:source path="/test/plugins/list-files.test.js" />
+</prompt>
