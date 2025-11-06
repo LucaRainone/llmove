@@ -80,7 +80,7 @@ program
  .description('Process XML files in specs folder')
  .option('--dryRun', 'Show what would be sent without making API call')
  .option('--again', 'Re-apply last output files')
- .option('--tool', 'Ask the LLM which tool to use for processing')
+ .option('--tool', 'The LLM will ask you clarifications if needed')
  .option('--overwrite', 'All files are safe to overwrite')
  .action(async (options) => {
    const config = await loadConfig();
